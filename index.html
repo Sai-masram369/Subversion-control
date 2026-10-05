@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learning SVN: Centralized Version Control</title>
+    <style>
+        :root {
+            --primary: #5c3c92;
+            --secondary: #077187;
+            --accent: #e28743;
+            --bg: #f4f6f9;
+            --text: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        /* Diagram Container */
+        .diagram-container {
+            position: relative;
+            width: 800px;
+            height: 450px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.05);
+            overflow: hidden;
+            border: 1px solid #e1e8ed;
+        }
+
+        /* Nodes */
+        .node {
+            position: absolute;
+            padding: 15px 25px;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            z-index: 10;
+        }
+
+        .server-repo {
+            top: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--primary);
+            width: 200px;
+        }
+
+        .revision-tag {
+            background: rgba(255,255,255,0.2);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            margin-top: 5px;
+            display: inline-block;
+        }
+
+        .local-workspaces {
+            position: absolute;
+            bottom: 40px;
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            padding: 0 50px;
+            box-sizing: border-box;
+        }
+
+        .client-node {
+            background-color: var(--secondary);
+            width: 150px;
+            position: relative;
+        }
+
+        /* Network Tracks */
+        .track {
+            position: absolute;
+            width: 2px;
+            background: #cbd5e1;
+            z-index: 1;
+        }
+        .track-left {
+            top: 120px;
+            left: 215px;
+            height: 220px;
+            transform: rotate(35deg);
+        }
+        .track-right {
+            top: 120px;
+            right: 215px;
+            height: 220px;
+            transform: rotate(-35deg);
+        }
+
+        /* Animated Data Packets */
+        .packet {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background-color: var(--accent);
+            border-radius: 50%;
+            z-index: 5;
+            opacity: 0;
+            box-shadow: 0 0 8px var(--accent);
+        }
+
+        /* Keyframe Animations */
+        @keyframes checkoutUpdate {
+            0% {
+                top: 110px;
+                left: 385px;
+                opacity: 1;
+            }
+            100% {
+                top: 320px;
+                left: 140px;
+                opacity: 1;
+            }
+        }
+
+        @keyframes commit {
+            0% {
+                top: 320px;
+                left: 640px;
+                opacity: 1;
+            }
+            100% {
+                top: 110px;
+                left: 400px;
+                opacity: 1;
+            }
+        }
+
+        /* Animation Trigger Classes */
+        .animate-checkout {
+            animation: checkoutUpdate 2s linear infinite;
+        }
+
+        .animate-commit {
+            animation: commit 2s linear infinite;
+        }
+
+        /* Controls Panel */
+        .controls {
+            margin-top: 25px;
+            display: flex;
+            gap: 15px;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .btn-update { background-color: #e2e8f0; color: #334155; }
+        .btn-update:hover { background-color: #cbd5e1; }
+
+        .btn-commit { background-color: var(--accent); color: white; }
+        .btn-commit:hover { background-color: #cd712c; }
+
+        /* Lesson Text Explainer */
+        .explainer {
+            margin-top: 30px;
+            max-width: 800px;
+            background: #fff;
+            padding: 25px;
+            border-radius: 12px;
+            border: 1px solid #e1e8ed;
+        }
+
+        .explainer h3 {
+            margin-top: 0;
+            color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Subversion (SVN) Workflow</h1>
+    <div class="subtitle">Interactive CSS Animation to understand Centralized Version Control</div>
+
+    <div class="diagram-container">
+        <!-- Static Passive Tracks connecting clients to Central Server -->
+        <div class="track track-left"></div>
+        <div class="track track-right"></div>
+
+        <!-- Central Repository Server -->
+        <div class="node server-repo">
+            Central SVN Server
+            <br>
+            <span class="revision-tag" id="rev-tag">Global Rev: r24</span>
+        </div>
+
+        <!-- Animated Data Packets -->
+        <div id="packet1" class="packet"></div>
+        <div id="packet2" class="packet"></div>
+
+        <!-- Local Working Copies -->
+        <div class="local-workspaces">
+            <div class="node client-node">
+                Developer A
+                <div style="font-size:0.8em; font-weight:normal; margin-top:5px;">Working Copy</div>
+            </div>
+            <div class="node client-node">
+                Developer B
+                <div style="font-size:0.8em; font-weight:normal; margin-top:5px;">Working Copy</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Action Controls -->
+    <div class="controls">
+        <button class="btn-update" onclick="triggerUpdate()">Simulate "svn update"</button>
+        <button class="btn-commit" onclick="triggerCommit()">Simulate "svn commit"</button>
+    </div>
+
+    <!-- Conceptual Educational Text -->
+    <div class="explainer">
+        <h3>How SVN Works:</h3>
+        <ul>
+            <li><strong>Centralized Hub:</strong> Notice how both developers talk directly to one single master server. There are no direct connections between Developer A and Developer B.</li>
+            <li><strong>svn update:</strong> Pulls down the latest filesystem changes from the central server into your local working directory. Watch the data travel down to the client.</li>
+            <li><strong>svn commit:</strong> Pushes your local edits up to the central server. Doing this successfully increments the <strong>Global Revision Number</strong> for the entire repository tree.</li>
+        </ul>
+    </div>
+
+    <script>
+        let currentRevision = 24;
+        const packet1 = document.getElementById('packet1');
+        const packet2 = document.getElementById('packet2');
+        const revTag = document.getElementById('rev-tag');
+
+        function triggerUpdate() {
+            // Reset active states
+            packet1.classList.remove('animate-checkout');
+            packet2.classList.remove('animate-commit');
+            
+            // Force redraw layout
+            void packet1.offsetWidth; 
+            
+            // Start the checkout/update animation path downward
+            packet1.classList.add('animate-checkout');
+        }
+
+        function triggerCommit() {
+            // Reset active states
+            packet1.classList.remove('animate-checkout');
+            packet2.classList.remove('animate-commit');
+            
+            // Force redraw layout
+            void packet2.offsetWidth; 
+            
+            // Start the commit animation path upward
+            packet2.classList.add('animate-commit');
+
+            // Increment the central repository version dynamically to show concept
+            currentRevision++;
+            revTag.textContent = `Global Rev: r${currentRevision}`;
+        }
+    </script>
+</body>
+</html>
